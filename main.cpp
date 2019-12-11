@@ -28,49 +28,59 @@ void countPupils(teacher Teachers[], int teacherCount, pupil Pupils[], int pupil
 string getTeacherWithMostPupils(teacher Teachers[], int teacherCount);
 string getTeacherWithTopPupils(teacher Teachers[], pupil Pupils[], int pupilCount);
 int getAverageGrade(pupil Pupils[], int pupilCount);
-int getWorstTeacherCount(teacher Teachers[], int teacherCount, pupil Pupils[], int pupilCount, int averageGrade);
-void getTeachersWithWorstPupils(teacher Teachers[], pupil Pupils[], int pupilCount, int averageGrade, string worstTeachers[]);
-void writeResults();
+int getWorstPupilCount(pupil Pupils[], int pupilCount, int averageGrade);
+void getTeachersWithWorstPupils(teacher Teachers[], pupil Pupils[], int pupilCount, int averageGrade,
+                                                    string WorstTeachers[], int & worstTeacherCount);
+bool in_array(string Arr[], string searchString, int arrCount);
+void writeResults(teacher Teachers[], int teacherCount, string teacherWithMostPupils, string teacherWithTopPupils,
+                                     string teachersWithWorstPupils[], int worstTeacherCount, const char filename[]);
 int findLineCount(const char filename[]);
 
 int main() {
+    // declare Vars
     const char teachers[] = "mokytojai.txt",
-               pupils[] = "mokiniai.txt";
+               pupils[] = "mokiniai.txt",
+               results[] = "rezultatai.txt";
+
     int teacherCount = findLineCount(teachers),
-        pupilCount = findLineCount(pupils);
+        pupilCount = findLineCount(pupils),
+        averagePupilGrade,
+        worstTeacherCount = 0;
+
+    string teacherWithMostPupils,
+           teacherWithTopPupils;
+
     teacher Teachers[teacherCount];
     pupil Pupils[pupilCount];
 
+    // read Files
     readTeachers(Teachers, teacherCount, teachers);
     readPupils(Pupils, pupilCount, pupils);
 
+    // assign teacher Ids to Pupils
     assignTeacherId(Teachers, teacherCount, Pupils, pupilCount);
+
+    // count how many pupils each teacher has
     countPupils(Teachers, teacherCount, Pupils, pupilCount);
 
-    string teacherWithMostPupils = getTeacherWithMostPupils(Teachers, teacherCount);
-//    cout << teacherWithMostPupils;
-    string teacherWithTopPupils = getTeacherWithTopPupils(Teachers, Pupils, pupilCount);
-//    cout << '\n' << teacherWithTopPupils;
-    int averagePupilGrade = getAverageGrade(Pupils, pupilCount);
-//    cout << averagePupilGrade;
+    // find teacher with most Pupils
+    teacherWithMostPupils = getTeacherWithMostPupils(Teachers, teacherCount);
 
-    int worstTeacherCount = getWorstTeacherCount(Teachers, teacherCount, Pupils, pupilCount, averagePupilGrade);
-    string worstTeachers[worstTeacherCount];
-    getTeachersWithWorstPupils(Teachers, Pupils, pupilCount, averagePupilGrade, worstTeachers);
-    for(int i = 0; i < worstTeacherCount; i++) {
-        cout << worstTeachers[i];
-        cout << '\n';
-    }
+    // find teacher with best Pupils
+    teacherWithTopPupils = getTeacherWithTopPupils(Teachers, Pupils, pupilCount);
 
-//    for(int i = 0; i < teacherCount; i++) {
-//        cout << Teachers[i].firstName << " " << Teachers[i].lastName << " " << Teachers[i].classSubject << " " << Teachers[i].studentCount;
-//        cout << '\n';
-//    }
-//    cout << '\n';
-//    for(int i = 0; i < pupilCount; i++) {
-//        cout << Pupils[i].firstName << " " << Pupils[i].lastName << " " << Pupils[i].classSubject << " " << Pupils[i].grade << " " << Pupils[i].teacherId;
-//        cout << '\n';
-//    }
+    // declare Vars
+    averagePupilGrade = getAverageGrade(Pupils, pupilCount);
+    worstTeacherCount = getWorstPupilCount(Pupils, pupilCount, averagePupilGrade);
+    string teachersWithWorstPupils[worstTeacherCount];
+
+    // find teacher with worst Pupils
+    getTeachersWithWorstPupils(Teachers, Pupils, pupilCount, averagePupilGrade,
+                                                 teachersWithWorstPupils, worstTeacherCount);
+
+    // write Results
+    writeResults(Teachers, teacherCount, teacherWithMostPupils, teacherWithTopPupils,
+                                         teachersWithWorstPupils, worstTeacherCount, results);
 
     return 0;
 }
@@ -177,7 +187,7 @@ int getAverageGrade(pupil Pupils[], int pupilCount)
     return round(averagePupilGrade);
 }
 
-int getWorstTeacherCount(teacher Teachers[], int teacherCount, pupil Pupils[], int pupilCount, int averageGrade)
+int getWorstPupilCount(pupil Pupils[], int pupilCount, int averageGrade)
 {
     int worstTeacherCount = 0;
     for(int i = 0; i < pupilCount; i++) {
@@ -189,13 +199,53 @@ int getWorstTeacherCount(teacher Teachers[], int teacherCount, pupil Pupils[], i
     return worstTeacherCount;
 }
 
-void getTeachersWithWorstPupils(teacher Teachers[], pupil Pupils[], int pupilCount, int averageGrade, string worstTeachers[])
+bool in_array(string Arr[], string searchString, int arrCount)
 {
-    int temp = 0;
-    for(int i = 0; i < pupilCount; i++) {
-        if (Pupils[i].grade < averageGrade) {
-          worstTeachers[temp] = Teachers[Pupils[i].teacherId].firstName + ' ' + Teachers[Pupils[i].teacherId].lastName;
-          temp++;
+    bool found = false;
+    for(int i = 0; i < arrCount; i++) {
+        if (Arr[i] == searchString) {
+            found = true;
         }
     }
+
+    return found;
+}
+
+void getTeachersWithWorstPupils(teacher Teachers[], pupil Pupils[], int pupilCount, int averageGrade,
+                                string WorstTeachers[], int & worstTeacherCount)
+{
+    worstTeacherCount = 0;
+    string teacher = " ";
+    for(int i = 0; i < pupilCount; i++) {
+        if (Pupils[i].grade < averageGrade) {
+            teacher = Teachers[Pupils[i].teacherId].firstName + ' ' + Teachers[Pupils[i].teacherId].lastName;
+            if (!in_array(WorstTeachers, teacher, worstTeacherCount)) {
+                WorstTeachers[worstTeacherCount] = teacher;
+                worstTeacherCount++;
+            }
+        }
+    }
+}
+
+void writeResults(teacher Teachers[], int teacherCount, string teacherWithMostPupils, string teacherWithTopPupils,
+                  string teachersWithWorstPupils[], int worstTeacherCount, const char filename[])
+{
+    ofstream out(filename);
+
+    out << "Kiekvienas mokytojas turi mokiniu:\n";
+    for(int i = 0; i < teacherCount; i++) {
+        out << Teachers[i].lastName << " " << Teachers[i].studentCount << '\n';
+    }
+    out << "--------------------------------------------------------------\n";
+    out << "Daugiausia mokiniu turi: " << teacherWithMostPupils << '\n';
+    out << "--------------------------------------------------------------\n";
+    out << "Geriausiai mokiniai mokosi pas: " << teacherWithTopPupils << '\n';
+    out << "--------------------------------------------------------------\n";
+    out << "Mokiniu vidurkis nesiekia bendro mokiniu vidurkio pas: " << '\n';
+    for(int i = 0; i < worstTeacherCount; i++) {
+        if (teachersWithWorstPupils[i] != " ") {
+        out << "# " << teachersWithWorstPupils[i] << '\n';
+        }
+    }
+    out.close();
 }
